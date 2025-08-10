@@ -3,11 +3,11 @@ services:
     name: basketball-referee-api
     runtime: python
     plan: free
-    buildCommand: chmod +x build.sh && ./build.sh
+    buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.12
+        value: 3.10.14
       - key: MODEL_URL
         sync: false
     autoDeploy: false
