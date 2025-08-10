@@ -2,19 +2,32 @@
 # exit on error
 set -o errexit
 
-# Upgrade pip and install setuptools first
-python -m pip install --upgrade pip setuptools wheel
+echo "Current Python version:"
+python --version
 
-# Install requirements
-pip install -r requirements.txt
+# Install dependencies compatible with current Python
+pip install --upgrade pip
+
+# For Python 3.13, we need to use newer versions
+pip install fastapi==0.104.1
+pip install uvicorn[standard]==0.24.0
+pip install python-multipart==0.0.6
+
+# Install PyTorch with CPU support (latest version)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Install other dependencies
+pip install opencv-python-headless==4.8.1.78
+pip install ultralytics
+pip install numpy
+pip install pillow
+pip install pyyaml==6.0.1
+pip install scikit-learn
+pip install requests==2.31.0
 
 # Create models directory
 mkdir -p models
 
-# Download model if URL is provided
-if [ -n "$MODEL_URL" ]; then
-    echo "Downloading model from $MODEL_URL"
-    wget -O models/best.pt "$MODEL_URL" || echo "Model download failed - continuing anyway"
-fi
-
 echo "Build complete!"
+echo "Python version used:"
+python --version
