@@ -19,17 +19,8 @@ import cv2
 from basketball_referee import ImprovedFreeThrowScorer, CVATDatasetConverter, FreeThrowModelTrainer
 
 # Global variables
-# Check if running on Render
-if "RENDER" in os.environ:
-    # On Render, use relative path
-    MODEL_PATH = "models/best.pt"
-else:
-    # Local development path
-    MODEL_PATH = r"C:/Users/carlc/Desktop/API  AI REFEREE MODEL/runs/detect/train3/weights/best.pt"
-
-MODEL_URL = os.getenv("MODEL_URL")  # Get from environment variable
+MODEL_URL = os.getenv("MODEL_URL")
 scorer_instance = None
-
 
 def download_model():
     """Download model from URL if not present"""
@@ -52,7 +43,6 @@ def download_model():
         print(f"Failed to download model: {e}")
         return False
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -68,7 +58,6 @@ async def lifespan(app: FastAPI):
     print(f"Python file: {__file__}")
     print(f"Model path: {MODEL_PATH}")
     print(f"Model exists: {os.path.exists(MODEL_PATH)}")
-    print(f"Running on Render: {'RENDER' in os.environ}")
     
     # Try to download model if on Render
     if "RENDER" in os.environ and not os.path.exists(MODEL_PATH):
@@ -77,6 +66,7 @@ async def lifespan(app: FastAPI):
         else:
             print("⚠️ Model download failed - API will run without scoring functionality")
 
+	
     if os.path.exists(MODEL_PATH):
         try:
             print("Loading model...")
@@ -92,10 +82,10 @@ async def lifespan(app: FastAPI):
         print("API will run but scoring functionality will be disabled.")
 
     print("=" * 60 + "\n")
-
+    
     # This yield is where the application runs
     yield
-
+    
     # Shutdown logic
     print("\n" + "=" * 60)
     print("AI BASKETBALL REFEREE API SHUTTING DOWN")
@@ -134,7 +124,6 @@ async def root():
         "instructions": "Set MODEL_URL environment variable in Render to enable scoring" if "RENDER" in os.environ and not scorer_instance else None
     }
 
-
 @app.get("/model_status")
 async def model_status():
     """Detailed model status."""
@@ -147,7 +136,6 @@ async def model_status():
         "model_url": "Set" if MODEL_URL else "Not set",
         "environment": "render" if "RENDER" in os.environ else "local"
     }
-
 
 @app.post("/score_video/")
 async def score_video(video_file: UploadFile = File(...)) -> Dict[str, Any]:
@@ -234,6 +222,7 @@ async def score_video(video_file: UploadFile = File(...)) -> Dict[str, Any]:
         }
 
 
+
 @app.post("/train_model/")
 async def train_model(
         cvat_zip_files: List[UploadFile] = File(..., description="CVAT YOLO 1.1 annotated datasets as ZIP files"),
@@ -244,16 +233,22 @@ async def train_model(
 ) -> Dict[str, Any]:
     """
     Trains a new basketball referee model using uploaded CVAT annotated datasets.
-    Note: Training on Render is not recommended due to resource limitations.
+
+    Args:
+        cvat_zip_files: List of CVAT YOLO 1.1 annotated datasets (ZIP files)
+        epochs: Number of training epochs (default: 150)
+        batch_size: Training batch size (default: 16)
+        model_size: YOLO model size - n/s/m/l (default: s)
+        device: Training device - cpu/cuda/auto (default: auto)
+
+    Returns:
+        Training results including model performance metrics
     """
-    
     if "RENDER" in os.environ:
         raise HTTPException(
             status_code=503,
             detail="Model training is disabled on Render due to resource limitations. Please train locally and upload the model."
         )
-    
-    # Rest of the training code remains the same...
     global scorer_instance, MODEL_PATH
 
     print(f"\n=== Training New Model ===")
@@ -382,12 +377,10 @@ async def train_model(
                 detail=f"Model training failed: {str(e)}"
             )
 
-
 @app.get("/health")
 async def health():
     """Health check endpoint for Render"""
     return {"status": "healthy"}
-
 
 if __name__ == "__main__":
     import uvicorn
