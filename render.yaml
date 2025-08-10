@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: basketball-referee-api
+    runtime: python
+    plan: free
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: python main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: MODEL_URL
+        sync: false
+    autoDeploy: false
